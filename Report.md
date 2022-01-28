@@ -8,11 +8,9 @@ The agent uses an actor-critic model with an experience replay buffer. The total
 
 ## Plot of Rewards
 
-The plot of the rewards at each episode is given below. 
+The plot of the rewards at each episode is given in the Jupyter Notebook.
 
 The number of episodes required for the agent to "solve" the environment is ~200 episodes.
-
-(reward_plot.jpg)
 
 
 ## Ideas for Future Work
