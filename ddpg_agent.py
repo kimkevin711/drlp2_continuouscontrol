@@ -9,24 +9,24 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-BUFFER_SIZE = int(1e6)  # replay buffer size
-# BATCH_SIZE = 128        # minibatch size
+BUFFER_SIZE = int(1e8)  # replay buffer size
+BATCH_SIZE = 500        # minibatch size
 GAMMA = 0.99            # discount factor
-TAU = 1e-3              # for soft update of target parameters
-# TAU = 1e-2
-LR_ACTOR = 1e-4         # learning rate of the actor 
-# LR_ACTOR = 1e-3
-# LR_CRITIC = 1e-2
-LR_CRITIC = 1e-3        # learning rate of the critic
+# TAU = 1e-3              # for soft update of target parameters
+TAU = 2.1e-3
+# LR_ACTOR = 1e-4         # learning rate of the actor 
+LR_ACTOR = 8e-4
+# LR_CRITIC = 1e-3        # learning rate of the critic
+LR_CRITIC = 1e-3
 WEIGHT_DECAY = 0        # L2 weight decay
-UPDATE_EVERY = 50       # how often to update the network
+UPDATE_EVERY = 4       # how often to update the network
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent():
     """Interacts with and learns from the environment."""
     
-    def __init__(self, state_size, action_size, batch_size, random_seed, actor_local_dict = None, critic_local_dict = None):
+    def __init__(self, state_size, action_size, random_seed, batch_size=BATCH_SIZE, actor_state=None, critic_state=None):
         """Initialize an Agent object.
         
         Params
@@ -43,18 +43,21 @@ class Agent():
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0 
 
-        print('Using ', device)
+        print('Agent Using Device:', device)
         
         # Actor Network (w/ Target Network)
         self.actor_local = Actor(state_size, action_size, random_seed).to(device)
-        if actor_local_dict: self.actor_local.load_state_dict(state_dict = actor_local_dict)
+        
+        if actor_state: self.actor_local.load_state_dict(actor_state)
         self.actor_target = Actor(state_size, action_size, random_seed).to(device)
+        if actor_state: self.actor_target.load_state_dict(actor_state)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=LR_ACTOR)
 
         # Critic Network (w/ Target Network)
         self.critic_local = Critic(state_size, action_size, random_seed).to(device)
-        if critic_local_dict: self.critic_local.load_state_dict(state_dict = critic_local_dict)
+        if critic_state: self.critic_local.load_state_dict(critic_state)
         self.critic_target = Critic(state_size, action_size, random_seed).to(device)
+        if critic_state: self.critic_target.load_state_dict(critic_state)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=LR_CRITIC, weight_decay=WEIGHT_DECAY)
 
         # Noise process
@@ -105,6 +108,7 @@ class Agent():
         """
         states, actions, rewards, next_states, dones = experiences
 
+        
         # ---------------------------- update critic ---------------------------- #
         # Get predicted next-state actions and Q values from target models
         actions_next = self.actor_target(next_states)
@@ -127,6 +131,7 @@ class Agent():
         # Minimize the loss
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
+#         torch.nn.utils.clip_grad_norm_(self.actor_local.parameters(), 1)
         self.actor_optimizer.step()
 
         # ----------------------- update target networks ----------------------- #
