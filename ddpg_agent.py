@@ -26,7 +26,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class Agent():
     """Interacts with and learns from the environment."""
     
-    def __init__(self, state_size, action_size, batch_size, random_seed):
+    def __init__(self, state_size, action_size, batch_size, random_seed, actor_local_dict = None, critic_local_dict = None):
         """Initialize an Agent object.
         
         Params
@@ -47,11 +47,13 @@ class Agent():
         
         # Actor Network (w/ Target Network)
         self.actor_local = Actor(state_size, action_size, random_seed).to(device)
+        if actor_local_dict: self.actor_local.load_state_dict(state_dict = actor_local_dict)
         self.actor_target = Actor(state_size, action_size, random_seed).to(device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=LR_ACTOR)
 
         # Critic Network (w/ Target Network)
         self.critic_local = Critic(state_size, action_size, random_seed).to(device)
+        if critic_local_dict: self.critic_local.load_state_dict(state_dict = critic_local_dict)
         self.critic_target = Critic(state_size, action_size, random_seed).to(device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=LR_CRITIC, weight_decay=WEIGHT_DECAY)
 
